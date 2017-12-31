@@ -145,7 +145,7 @@ def handle_osc(data, src, dispatch=None, strict=False):
         pass
 
 
-def run_server(saddr, port, handler=handle_osc):
+def run_server(saddr, port, callback=None, handler=handle_osc):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     if server_debug: print("Created OSC UDP server socket.")
@@ -158,6 +158,6 @@ def run_server(saddr, port, handler=handle_osc):
             data, caddr = sock.recvfrom(MAX_DGRAM_SIZE)
             if server_debug: print("RECV %i bytes from %s:%s",
                                     len(data), *get_hostport(caddr))
-            handler(data, caddr)
+            handler(data, caddr, dispatch=callback)
     finally:
         sock.close()

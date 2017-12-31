@@ -4,9 +4,9 @@
 #
 """A minimal OSC UDP server."""
 
-import logging
 import socket
 
+server_debug = False
 try:
     from ustruct import unpack
 except ImportError:
@@ -14,11 +14,10 @@ except ImportError:
 
 from uosc.common import Impulse, to_time
 
-if __debug__:
+if server_debug:
     from uosc.socketutil import get_hostport
 
 
-log = logging.getLogger("uosc.server")
 MAX_DGRAM_SIZE = 1472
 
 
@@ -54,7 +53,6 @@ def parse_message(msg, strict=False):
         if strict:
             raise ValueError(errmsg)
         else:
-            log.warning(errmsg + ' Ignoring arguments.')
             tags = ''
 
     for typetag in tags:
@@ -128,39 +126,38 @@ def handle_osc(data, src, dispatch=None, strict=False):
         elif head == '#bundle':
             messages = parse_bundle(data, strict)
     except:
-        if __debug__:
-            log.debug("Could not parse message from %s:%i.",
+        if server_debug:
+            print("Could not parse message from %s:%i.",
                       *get_hostport(src))
-            log.debug("Data: %r", data)
+            print("Data: %r", data)
         return
 
     try:
         for timetag, (oscaddr, tags, args) in messages:
-            if __debug__:
-                log.debug("OSC address: %s" % oscaddr)
-                log.debug("OSC type tags: %r" % tags)
-                log.debug("OSC arguments: %r" % (args,))
+            if server_debug:
+                print("OSC address: %s" % oscaddr)
+                print("OSC type tags: %r" % tags)
+                print("OSC arguments: %r" % (args,))
 
             if dispatch:
                 dispatch(timetag, (oscaddr, tags, args, src))
     except Exception as exc:
-        log.error("Exception in OSC handler: %s", exc)
+        pass
 
 
 def run_server(saddr, port, handler=handle_osc):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    if __debug__: log.debug("Created OSC UDP server socket.")
+    if server_debug: print("Created OSC UDP server socket.")
 
     sock.bind((saddr, port))
-    log.info("Listening for OSC messages on %s:%i.", saddr, port)
+    if server_debug: print("Listening for OSC messages on %s:%i.", saddr, port)
 
     try:
         while True:
             data, caddr = sock.recvfrom(MAX_DGRAM_SIZE)
-            if __debug__: log.debug("RECV %i bytes from %s:%s",
+            if server_debug: print("RECV %i bytes from %s:%s",
                                     len(data), *get_hostport(caddr))
             handler(data, caddr)
     finally:
         sock.close()
-        log.info("Bye!")

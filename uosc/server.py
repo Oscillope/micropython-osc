@@ -45,7 +45,7 @@ def parse_message(msg, strict=False):
         raise ValueError("OSC address pattern must start with a slash.")
 
     # type tag string must start with comma (ASCII 44)
-    if ofs < len(msg) and msg[ofs:ofs+1] == b',':
+    if ofs < len(msg) and msg[ofs:ofs + 1] == b',':
         tags, ofs = split_oscstr(msg, ofs)
         tags = tags[1:]
     else:
